@@ -1,0 +1,2 @@
+{"sessionId":"e93500","runId":"pre-fix","hypothesisId":"S2","location":"SecurityConfig.java:accessDeniedHandler","message":"403 from security","data":{"method":"GET","path":"/api/admin/test","message":"Access Denied"},"timestamp":1774624121467}
+{"sessionId":"e93500","runId":"pre-fix","hypothesisId":"S1","location":"SecurityConfig.java:authenticationEntryPoint","message":"401 from security","data":{"method":"GET","path":"/api/admin/test","message":"Full authentication is required to access this resource"},"timestamp":1778137894365}
