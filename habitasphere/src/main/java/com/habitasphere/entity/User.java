@@ -1,48 +1,52 @@
 package com.habitasphere.entity;
 
 import jakarta.persistence.*;
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
+@Access(AccessType.FIELD)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username;
-
-    @Column(nullable = false)
     private String name;
 
+    private String username;
+
+    @Column(unique = true)
     private String email;
 
     private String password;
 
     @Column(name = "is_active", nullable = false)
-    private Boolean active = true;
+    private boolean active = true;
 
-    @ManyToOne
-    @JoinColumn(name = "society_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "society_id")
     private Society society;
 
-    @ManyToOne
+   @ManyToMany(fetch = FetchType.EAGER)
+@JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+)
+private Set<Role> roles;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id")
     private Apartment apartment;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
+    @Column(name = "resident_type")
+    private String residentType;
 
     public User() {
     }
 
+    // ID
     public Long getId() {
         return id;
     }
@@ -51,14 +55,7 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
+    // NAME
     public String getName() {
         return name;
     }
@@ -67,6 +64,16 @@ public class User {
         this.name = name;
     }
 
+    // USERNAME
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    // EMAIL
     public String getEmail() {
         return email;
     }
@@ -75,6 +82,7 @@ public class User {
         this.email = email;
     }
 
+    // PASSWORD
     public String getPassword() {
         return password;
     }
@@ -83,14 +91,20 @@ public class User {
         this.password = password;
     }
 
-    public Boolean getActive() {
+    // ACTIVE
+    public boolean isActive() {
         return active;
     }
 
-    public void setActive(Boolean active) {
+    public boolean getActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
         this.active = active;
     }
 
+    // SOCIETY
     public Society getSociety() {
         return society;
     }
@@ -99,6 +113,16 @@ public class User {
         this.society = society;
     }
 
+    // ROLES
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    // APARTMENT
     public Apartment getApartment() {
         return apartment;
     }
@@ -107,11 +131,12 @@ public class User {
         this.apartment = apartment;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
+    // RESIDENT TYPE
+    public String getResidentType() {
+        return residentType;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+    public void setResidentType(String residentType) {
+        this.residentType = residentType;
     }
 }

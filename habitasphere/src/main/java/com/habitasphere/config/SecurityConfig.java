@@ -27,13 +27,15 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/error")
                         .permitAll()
-                        .requestMatchers(HttpMethod.POST,
+                        .requestMatchers(
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/test",
                                 "/auth/register",
                                 "/auth/login",
                                 "/register",
-                                "/login",
-                                "/api/auth/register",
-                                "/api/auth/login")
+                                "/login"
+                        )
                         .permitAll()
                         .requestMatchers("/api/user/**")
                         .hasAnyRole("USER", "ADMIN")

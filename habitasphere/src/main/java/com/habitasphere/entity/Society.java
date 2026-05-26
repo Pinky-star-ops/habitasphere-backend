@@ -33,5 +33,6 @@ private List<Apartment> apartments;
 
     private String country;
 
+    @Column(name = "pin_code")
     private String pinCode;
 }

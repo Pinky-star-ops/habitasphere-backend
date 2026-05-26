@@ -1,10 +1,13 @@
 package com.habitasphere.service;
 
+import com.habitasphere.dto.AssignApartmentRequest;
 import com.habitasphere.dto.LoginRequest;
 import com.habitasphere.dto.RegisterRequest;
+import com.habitasphere.entity.Apartment;
 import com.habitasphere.entity.Role;
 import com.habitasphere.entity.RoleType;
 import com.habitasphere.entity.User;
+import com.habitasphere.repository.ApartmentRepository;
 import com.habitasphere.repository.RoleRepository;
 import com.habitasphere.repository.SocietyRepository;
 import com.habitasphere.repository.UserRepository;
@@ -14,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.habitasphere.exception.BadRequestException;
 import com.habitasphere.exception.ResourceNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +36,8 @@ public class AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+private ApartmentRepository apartmentRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -105,5 +111,22 @@ public class AuthService {
         }
 
         return "Invalid Password";
+    }
+    @Transactional
+    public String assignApartment(AssignApartmentRequest request) {
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUserId()));
+
+        Apartment apartment = apartmentRepository.findById(request.getApartmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found with ID: " + request.getApartmentId()));
+
+        user.setApartment(apartment);
+
+        user.setResidentType(request.getResidentType());
+
+        userRepository.save(user);
+
+        return "Apartment assigned successfully";
     }
 }

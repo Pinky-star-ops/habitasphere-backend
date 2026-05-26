@@ -30,15 +30,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Do NOT run JWT filter on public auth endpoints (register/login).
-        // This prevents expired/invalid tokens from breaking signup/login.
-        return path.equals("/auth/register")
-                || path.equals("/auth/login")
-                || path.equals("/register")
-                || path.equals("/login")
-                || path.equals("/api/auth/register")
-                || path.equals("/api/auth/login")
-                || path.startsWith("/error");
+        // Do NOT run JWT filter on public auth endpoints.
+        // This prevents expired/invalid tokens from breaking signup/login/testing.
+        return path.endsWith("/api/auth/register")
+                || path.endsWith("/api/auth/login")
+                || path.endsWith("/api/auth/test")
+                || path.endsWith("/auth/register")
+                || path.endsWith("/auth/login")
+                || path.endsWith("/register")
+                || path.endsWith("/login")
+                || path.contains("/error");
     }
 
     @Override

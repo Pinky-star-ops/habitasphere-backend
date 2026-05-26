@@ -1,7 +1,7 @@
 package com.habitasphere.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "apartments")
@@ -11,28 +11,27 @@ public class Apartment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // old fields used by ApartmentService
+    @Column(name = "apartment_number", nullable = false)
     private String apartmentNumber;
-
-    private String blockName;
 
     private Integer floor;
 
-    // MANY apartments belong to ONE society
-    @ManyToOne
+    @Column(name = "block_name")
+    private String blockName;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "society_id")
     private Society society;
+
+    // new resident relationship
+    @OneToMany(mappedBy = "apartment")
+    private List<User> residents;
 
     public Apartment() {
     }
 
-    public Apartment(Long id, String apartmentNumber, String blockName, Integer floor, Society society) {
-        this.id = id;
-        this.apartmentNumber = apartmentNumber;
-        this.blockName = blockName;
-        this.floor = floor;
-        this.society = society;
-    }
-
+    // ID
     public Long getId() {
         return id;
     }
@@ -41,6 +40,7 @@ public class Apartment {
         this.id = id;
     }
 
+    // APARTMENT NUMBER
     public String getApartmentNumber() {
         return apartmentNumber;
     }
@@ -49,14 +49,7 @@ public class Apartment {
         this.apartmentNumber = apartmentNumber;
     }
 
-    public String getBlockName() {
-        return blockName;
-    }
-
-    public void setBlockName(String blockName) {
-        this.blockName = blockName;
-    }
-
+    // FLOOR
     public Integer getFloor() {
         return floor;
     }
@@ -65,11 +58,30 @@ public class Apartment {
         this.floor = floor;
     }
 
+    // BLOCK NAME
+    public String getBlockName() {
+        return blockName;
+    }
+
+    public void setBlockName(String blockName) {
+        this.blockName = blockName;
+    }
+
+    // SOCIETY
     public Society getSociety() {
         return society;
     }
 
     public void setSociety(Society society) {
         this.society = society;
+    }
+
+    // RESIDENTS
+    public List<User> getResidents() {
+        return residents;
+    }
+
+    public void setResidents(List<User> residents) {
+        this.residents = residents;
     }
 }
