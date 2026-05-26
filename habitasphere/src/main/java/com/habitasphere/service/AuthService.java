@@ -20,7 +20,9 @@ import com.habitasphere.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
@@ -75,15 +77,15 @@ private ApartmentRepository apartmentRepository;
                 .orElseThrow(() ->
                         new RuntimeException("Society not found")));
 
-        // DEFAULT ROLE = USER
-        Role userRole = roleRepository
-                .findByName(RoleType.ROLE_USER)
+        // DEFAULT ROLE = RESIDENT (Updated from USER for RBAC)
+        Role residentRole = roleRepository
+                .findByName(RoleType.ROLE_RESIDENT)
                 .orElseThrow(() ->
-                        new RuntimeException("Role not found"));
+                        new RuntimeException("Default Role ROLE_RESIDENT not found"));
 
         Set<Role> roles = new HashSet<>();
 
-        roles.add(userRole);
+        roles.add(residentRole);
 
         user.setRoles(roles);
 
@@ -106,8 +108,12 @@ private ApartmentRepository apartmentRepository;
                 request.getPassword(),
                 user.getPassword()
         )) {
+            // Extract roles list to store in JWT claims
+            List<String> roles = user.getRoles().stream()
+                    .map(r -> r.getName().name())
+                    .collect(Collectors.toList());
 
-            return jwtUtil.generateToken(user.getEmail());
+            return jwtUtil.generateToken(user.getEmail(), roles);
         }
 
         return "Invalid Password";

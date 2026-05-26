@@ -1,5 +1,6 @@
 package com.habitasphere.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -22,10 +23,12 @@ public class Apartment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "society_id")
+    @JsonIgnore
     private Society society;
 
     // new resident relationship
     @OneToMany(mappedBy = "apartment")
+    @JsonIgnore
     private List<User> residents;
 
     public Apartment() {

@@ -30,8 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Do NOT run JWT filter on public auth endpoints.
-        // This prevents expired/invalid tokens from breaking signup/login/testing.
+        // Do NOT run JWT filter on public endpoints or Swagger UI.
         return path.endsWith("/api/auth/register")
                 || path.endsWith("/api/auth/login")
                 || path.endsWith("/api/auth/test")
@@ -39,7 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.endsWith("/auth/login")
                 || path.endsWith("/register")
                 || path.endsWith("/login")
-                || path.contains("/error");
+                || path.contains("/error")
+                || path.contains("/v3/api-docs")
+                || path.contains("/swagger-ui");
     }
 
     @Override

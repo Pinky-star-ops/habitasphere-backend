@@ -2,6 +2,7 @@ package com.habitasphere.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -37,6 +38,22 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 response,
                 HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse>
+    handleAccessDenied(AccessDeniedException ex) {
+
+        ApiResponse response =
+                new ApiResponse(
+                        HttpStatus.FORBIDDEN.value(),
+                        "Access denied. You do not have permission to access this API."
+                );
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.FORBIDDEN
         );
     }
 
