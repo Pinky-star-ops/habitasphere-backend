@@ -1,7 +1,8 @@
 package com.habitasphere.security;
 
 import com.habitasphere.repository.UserRepository;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,8 @@ import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomUserDetailsService.class);
 
     private final UserRepository userRepository;
 
@@ -25,18 +28,22 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found"));
 
-        // IMPORTANT: Spring Security expects authorities to include the `ROLE_` prefix
-        // because `hasRole("ADMIN")` maps to `ROLE_ADMIN`.
         List<SimpleGrantedAuthority> authorities = user.getRoles() == null
                 ? List.of()
                 : user.getRoles().stream()
-                .map(r -> new SimpleGrantedAuthority(r.getName().name()))
+                .map(role -> new SimpleGrantedAuthority(normalizeRole(role.getName().name())))
                 .toList();
+
+        log.debug("Loaded user '{}' with authorities {}", user.getEmail(), authorities);
 
         return User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
                 .authorities(authorities)
                 .build();
+    }
+
+    private String normalizeRole(String roleName) {
+        return roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
     }
 }

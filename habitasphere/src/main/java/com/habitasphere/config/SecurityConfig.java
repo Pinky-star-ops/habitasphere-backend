@@ -1,6 +1,9 @@
 package com.habitasphere.config;
 
 import com.habitasphere.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,13 +14,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-// Enables @PreAuthorize annotations in controllers and services.
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -47,13 +52,19 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html"
                         )
                         .permitAll()
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/visitors/**")
+                        .hasAnyRole("ADMIN", "SECURITY", "RESIDENT")
                         .requestMatchers("/api/user/**", "/api/users/**")
                         .authenticated()
-                        .requestMatchers("/api/admin/**", "/api/societies/**", "/api/apartments/**")
+                        .requestMatchers("/api/societies/**", "/api/apartments/**")
                         .authenticated()
                         .anyRequest()
                         .authenticated()
                 )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(accessDeniedHandler()))
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
@@ -63,5 +74,23 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            var authentication = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext()
+                    .getAuthentication();
+
+            log.debug("Access denied for '{}'. Authenticated authorities: {}",
+                    request.getRequestURI(),
+                    authentication == null ? "none" : authentication.getAuthorities());
+
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                    "{\"status\":403,\"message\":\"Access denied. You do not have permission to access this API.\"}");
+        };
     }
 }

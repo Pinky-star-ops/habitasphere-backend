@@ -98,12 +98,38 @@ ALTER TABLE users
 
 -- 4. BOOTSTRAP INITIAL DATA (Roles and Default Society)
 -- =============================================================================
--- Safely insert default roles if they do not exist
-INSERT INTO roles (name)
-SELECT 'ROLE_USER' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_USER');
-
+-- Safely insert default roles if they do not exist.
+-- Spring Security hasRole('ADMIN') checks for ROLE_ADMIN internally, so store
+-- the ROLE_ prefix in the database.
 INSERT INTO roles (name)
 SELECT 'ROLE_ADMIN' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_ADMIN');
+
+INSERT INTO roles (name)
+SELECT 'ROLE_SECURITY' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_SECURITY');
+
+INSERT INTO roles (name)
+SELECT 'ROLE_RESIDENT' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_RESIDENT');
+
+INSERT INTO roles (name)
+SELECT 'ROLE_SECRETARY' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_SECRETARY');
+
+-- Older versions used ROLE_USER. Move those assignments to ROLE_RESIDENT so
+-- @PreAuthorize("hasRole('RESIDENT')") works for existing resident accounts.
+UPDATE user_roles
+SET role_id = (SELECT id FROM roles WHERE name = 'ROLE_RESIDENT')
+WHERE role_id IN (SELECT id FROM roles WHERE name = 'ROLE_USER')
+  AND NOT EXISTS (
+      SELECT 1
+      FROM user_roles existing
+      WHERE existing.user_id = user_roles.user_id
+        AND existing.role_id = (SELECT id FROM roles WHERE name = 'ROLE_RESIDENT')
+  );
+
+DELETE FROM user_roles
+WHERE role_id IN (SELECT id FROM roles WHERE name = 'ROLE_USER');
+
+DELETE FROM roles
+WHERE name = 'ROLE_USER';
 
 -- Safely insert a default Society with ID = 1 for initial user registrations
 INSERT INTO societies (id, name, address, city, state, country, pin_code)
