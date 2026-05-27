@@ -60,8 +60,32 @@ public class SecurityConfig {
                         .authenticated()
                         .requestMatchers("/api/societies/**", "/api/apartments/**")
                         .authenticated()
-                        .anyRequest()
-                        .authenticated()
+                        .requestMatchers(
+        HttpMethod.POST,
+        "/api/complaints"
+)
+.hasAuthority("ROLE_RESIDENT")
+
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/complaints/my"
+)
+.hasAuthority("ROLE_RESIDENT")
+
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/complaints"
+)
+.hasAuthority("ROLE_ADMIN")
+
+.requestMatchers(
+        HttpMethod.PUT,
+        "/api/complaints/*/status"
+)
+.hasAnyAuthority(
+        "ROLE_ADMIN",
+        "ROLE_SECRETARY"
+)
                 )
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedHandler()))
