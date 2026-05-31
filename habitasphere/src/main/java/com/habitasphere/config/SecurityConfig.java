@@ -64,6 +64,7 @@ public class SecurityConfig {
         HttpMethod.POST,
         "/api/complaints"
 )
+
 .hasAuthority("ROLE_RESIDENT")
 
 .requestMatchers(
@@ -86,6 +87,38 @@ public class SecurityConfig {
         "ROLE_ADMIN",
         "ROLE_SECRETARY"
 )
+.requestMatchers(
+        HttpMethod.POST,
+        "/api/notices"
+)
+.hasAnyAuthority(
+        "ROLE_ADMIN",
+        "ROLE_SECRETARY"
+)
+
+.requestMatchers(
+        HttpMethod.PUT,
+        "/api/notices/**"
+)
+.hasAnyAuthority(
+        "ROLE_ADMIN",
+        "ROLE_SECRETARY"
+)
+
+.requestMatchers(
+        HttpMethod.DELETE,
+        "/api/notices/**"
+)
+.hasAnyAuthority(
+        "ROLE_ADMIN",
+        "ROLE_SECRETARY"
+)
+
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/notices/**"
+)
+.authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedHandler()))
@@ -93,6 +126,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+        
     }
 
     @Bean
