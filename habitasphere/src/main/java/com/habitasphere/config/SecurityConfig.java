@@ -118,8 +118,29 @@ public class SecurityConfig {
         HttpMethod.GET,
         "/api/notices/**"
 )
+
 .authenticated()
-                )
+.requestMatchers(
+        HttpMethod.POST,
+        "/api/bills/**"
+)
+.hasAuthority("ROLE_ADMIN")
+
+.requestMatchers(
+        HttpMethod.PUT,
+        "/api/bills/**"
+)
+.hasAuthority("ROLE_ADMIN")
+
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/bills/**"
+)
+.hasAnyAuthority(
+        "ROLE_ADMIN",
+        "ROLE_RESIDENT"
+)
+)
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedHandler()))
                 .addFilterBefore(jwtAuthenticationFilter,

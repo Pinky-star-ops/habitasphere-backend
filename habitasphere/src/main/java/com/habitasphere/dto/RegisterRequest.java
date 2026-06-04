@@ -1,11 +1,8 @@
 package com.habitasphere.dto;
 
-import com.habitasphere.entity.RoleType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
-import java.util.List;
 
 public class RegisterRequest {
 
@@ -21,9 +18,6 @@ public class RegisterRequest {
     private String password;
 
     private Boolean active;
-
-    // For debugging/dev. In production, you typically assign roles server-side only.
-    private List<RoleType> roles;
 
     private Long societyId;
 
@@ -57,14 +51,6 @@ public class RegisterRequest {
 
     public void setActive(Boolean active) {
         this.active = active;
-    }
-
-    public List<RoleType> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<RoleType> roles) {
-        this.roles = roles;
     }
 
     public Long getSocietyId() {
