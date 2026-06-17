@@ -30,6 +30,29 @@ public class UserController {
         return "User Profile Accessed";
     }
 
+    // GET /api/users - list all users.
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping
+    public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserProfileResponse> responses = users.stream().map(user -> {
+            List<String> roles = user.getRoles().stream()
+                    .map(r -> r.getName().name())
+                    .collect(Collectors.toList());
+            String apartmentNumber = user.getApartment() != null ? user.getApartment().getApartmentNumber() : null;
+            String societyName = user.getSociety() != null ? user.getSociety().getName() : null;
+            return UserProfileResponse.builder()
+                    .id(user.getId())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .roles(roles)
+                    .apartmentNumber(apartmentNumber)
+                    .societyName(societyName)
+                    .build();
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     // GET /api/users/me - current logged-in user profile.
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")

@@ -140,6 +140,36 @@ public class SecurityConfig {
         "ROLE_ADMIN",
         "ROLE_RESIDENT"
 )
+.requestMatchers(
+        HttpMethod.POST,
+        "/api/payments/pay"
+)
+.hasAuthority("ROLE_RESIDENT")
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/payments/my"
+)
+.hasAuthority("ROLE_RESIDENT")
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/payments/summary"
+)
+.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/payments"
+)
+.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/payments/*"
+)
+.authenticated()
+.requestMatchers(
+        HttpMethod.PUT,
+        "/api/payments/**"
+)
+.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
 )
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedHandler()))
