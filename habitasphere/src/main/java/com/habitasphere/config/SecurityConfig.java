@@ -60,6 +60,8 @@ public class SecurityConfig {
                         .authenticated()
                         .requestMatchers("/api/societies/**", "/api/apartments/**")
                         .authenticated()
+                        .requestMatchers("/api/facilities/**", "/api/bookings/**")
+                        .authenticated()
                         .requestMatchers(
         HttpMethod.POST,
         "/api/complaints"
