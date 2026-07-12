@@ -22,4 +22,13 @@ public interface FacilityBookingRepository extends JpaRepository<FacilityBooking
             LocalTime endTime,
             LocalTime startTime
     );
+
+    long countByStatus(BookingStatus status);
+
+    long countByUserId(Long userId);
+
+    long countByUserIdAndStatus(
+            Long userId,
+            BookingStatus status
+    );
 }

@@ -172,6 +172,16 @@ public class SecurityConfig {
         "/api/payments/**"
 )
 .hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/dashboard/admin"
+)
+.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
+.requestMatchers(
+        HttpMethod.GET,
+        "/api/dashboard/resident"
+)
+.hasAuthority("ROLE_RESIDENT")
 )
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedHandler()))

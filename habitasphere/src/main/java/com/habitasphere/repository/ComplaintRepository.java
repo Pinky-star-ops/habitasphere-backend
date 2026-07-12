@@ -14,4 +14,13 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByResident(User resident);
 
     Page<Complaint> findByStatus(ComplaintStatus status, Pageable pageable);
+
+    long countByStatus(ComplaintStatus status);
+
+    long countByResidentId(Long residentId);
+
+    long countByResidentIdAndStatus(
+            Long residentId,
+            ComplaintStatus status
+    );
 }
