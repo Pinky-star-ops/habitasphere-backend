@@ -18,4 +18,5 @@ public class NoticeRequestDto {
     private NoticePriority priority;
 
     private LocalDate expiryDate;
+    private boolean pinned;
 }

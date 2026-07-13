@@ -20,7 +20,9 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
                     n.expiryDate IS NULL
                     OR n.expiryDate >= :today
                 )
-            ORDER BY n.createdAt DESC
+            ORDER BY n.pinned DESC,
+         n.priority DESC,
+         n.createdAt DESC
             """)
     List<Notice> findActiveNotices(
             @Param("today") LocalDate today

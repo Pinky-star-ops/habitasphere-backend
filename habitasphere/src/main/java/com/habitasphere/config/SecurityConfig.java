@@ -25,174 +25,181 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter)
-            throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
-                        .requestMatchers("/error")
-                        .permitAll()
-                        .requestMatchers(
-                                "/api/auth/register",
-                                "/api/auth/login",
-                                "/api/auth/test",
-                                "/auth/register",
-                                "/auth/login",
-                                "/register",
-                                "/login",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/index.html"
-                        )
-                        .permitAll()
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
-                        .requestMatchers("/api/visitors/**")
-                        .hasAnyRole("ADMIN", "SECURITY", "RESIDENT")
-                        .requestMatchers("/api/user/**", "/api/users/**")
-                        .authenticated()
-                        .requestMatchers("/api/societies/**", "/api/apartments/**")
-                        .authenticated()
-                        .requestMatchers("/api/facilities/**", "/api/bookings/**")
-                        .authenticated()
-                        .requestMatchers(
-        HttpMethod.POST,
-        "/api/complaints"
-)
 
-.hasAuthority("ROLE_RESIDENT")
+public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                               JwtAuthenticationFilter jwtAuthenticationFilter)
+        throws Exception {
 
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/complaints/my"
-)
-.hasAuthority("ROLE_RESIDENT")
+    http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
 
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/complaints"
-)
-.hasAuthority("ROLE_ADMIN")
+                    // Preflight
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-.requestMatchers(
-        HttpMethod.PUT,
-        "/api/complaints/*/status"
-)
-.hasAnyAuthority(
-        "ROLE_ADMIN",
-        "ROLE_SECRETARY"
-)
-.requestMatchers(
-        HttpMethod.POST,
-        "/api/notices"
-)
-.hasAnyAuthority(
-        "ROLE_ADMIN",
-        "ROLE_SECRETARY"
-)
+                    // Public
+                    .requestMatchers(
+                            "/error",
+                            "/api/auth/register",
+                            "/api/auth/login",
+                            "/api/auth/test",
+                            "/auth/register",
+                            "/auth/login",
+                            "/register",
+                            "/login",
+                            "/v3/api-docs/**",
+                            "/v3/api-docs",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/swagger-ui/index.html"
+                    ).permitAll()
 
-.requestMatchers(
-        HttpMethod.PUT,
-        "/api/notices/**"
-)
-.hasAnyAuthority(
-        "ROLE_ADMIN",
-        "ROLE_SECRETARY"
-)
+                    // Admin
+                    .requestMatchers("/api/admin/**")
+                    .hasRole("ADMIN")
 
-.requestMatchers(
-        HttpMethod.DELETE,
-        "/api/notices/**"
-)
-.hasAnyAuthority(
-        "ROLE_ADMIN",
-        "ROLE_SECRETARY"
-)
+                    // Users
+                    .requestMatchers("/api/user/**", "/api/users/**")
+                    .authenticated()
 
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/notices/**"
-)
+                    // Society
+                    .requestMatchers("/api/societies/**", "/api/apartments/**")
+                    .authenticated()
 
-.authenticated()
-.requestMatchers(
-        HttpMethod.POST,
-        "/api/bills/**"
-)
-.hasAuthority("ROLE_ADMIN")
+                    // Facility Booking
+                    .requestMatchers("/api/facilities/**", "/api/bookings/**")
+                    .authenticated()
 
-.requestMatchers(
-        HttpMethod.PUT,
-        "/api/bills/**"
-)
-.hasAuthority("ROLE_ADMIN")
+                    // Visitors
+                    .requestMatchers("/api/visitors/**")
+                    .hasAnyRole("ADMIN", "SECURITY", "RESIDENT")
 
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/bills/**"
-)
-.hasAnyAuthority(
-        "ROLE_ADMIN",
-        "ROLE_RESIDENT"
-)
-.requestMatchers(
-        HttpMethod.POST,
-        "/api/payments/pay"
-)
-.hasAuthority("ROLE_RESIDENT")
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/payments/my"
-)
-.hasAuthority("ROLE_RESIDENT")
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/payments/summary"
-)
-.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/payments"
-)
-.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/payments/*"
-)
-.authenticated()
-.requestMatchers(
-        HttpMethod.PUT,
-        "/api/payments/**"
-)
-.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/dashboard/admin"
-)
-.hasAnyAuthority("ROLE_ADMIN", "ROLE_SECRETARY")
-.requestMatchers(
-        HttpMethod.GET,
-        "/api/dashboard/resident"
-)
-.hasAuthority("ROLE_RESIDENT")
-)
-                .exceptionHandling(exception -> exception
-                        .accessDeniedHandler(accessDeniedHandler()))
-                .addFilterBefore(jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                    // Complaints
+                    .requestMatchers(HttpMethod.POST,
+                            "/api/complaints")
+                    .hasAuthority("ROLE_RESIDENT")
 
-        return http.build();
-        
-    }
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/complaints/my")
+                    .hasAuthority("ROLE_RESIDENT")
 
-    @Bean
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/complaints")
+                    .hasAuthority("ROLE_ADMIN")
+
+                    .requestMatchers(HttpMethod.PUT,
+                            "/api/complaints/*/status")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    // Notices
+                    .requestMatchers(HttpMethod.POST,
+                            "/api/notices")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    .requestMatchers(HttpMethod.PUT,
+                            "/api/notices/**")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    .requestMatchers(HttpMethod.DELETE,
+                            "/api/notices/**")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/notices/**")
+                    .authenticated()
+
+                    // Notifications (NEW)
+                    .requestMatchers("/api/notifications/**")
+                    .authenticated()
+
+                    // Bills
+                    .requestMatchers(HttpMethod.POST,
+                            "/api/bills/**")
+                    .hasAuthority("ROLE_ADMIN")
+
+                    .requestMatchers(HttpMethod.PUT,
+                            "/api/bills/**")
+                    .hasAuthority("ROLE_ADMIN")
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/bills/**")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_RESIDENT"
+                    )
+
+                    // Payments
+                    .requestMatchers(HttpMethod.POST,
+                            "/api/payments/pay")
+                    .hasAuthority("ROLE_RESIDENT")
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/payments/my")
+                    .hasAuthority("ROLE_RESIDENT")
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/payments/summary")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/payments")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/payments/*")
+                    .authenticated()
+
+                    .requestMatchers(HttpMethod.PUT,
+                            "/api/payments/**")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    // Dashboard
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/dashboard/admin")
+                    .hasAnyAuthority(
+                            "ROLE_ADMIN",
+                            "ROLE_SECRETARY"
+                    )
+
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/dashboard/resident")
+                    .hasAuthority("ROLE_RESIDENT")
+
+                    // IMPORTANT: Everything else requires login
+                    .anyRequest()
+                    .authenticated()
+
+            )
+            .exceptionHandling(exception ->
+                    exception.accessDeniedHandler(accessDeniedHandler()))
+            .addFilterBefore(jwtAuthenticationFilter,
+                    UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}@Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }

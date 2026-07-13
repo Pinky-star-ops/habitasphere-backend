@@ -64,4 +64,12 @@ public class NoticeController {
                 noticeService.getActiveNotices()
         );
     }
+    @GetMapping("/{id}")
+public ResponseEntity<NoticeResponseDto> getNoticeById(
+        @PathVariable Long id
+) {
+    return ResponseEntity.ok(
+            noticeService.getNoticeById(id)
+    );
+}
 }

@@ -4,9 +4,12 @@ import com.habitasphere.dto.NoticeRequestDto;
 import com.habitasphere.dto.NoticeResponseDto;
 import com.habitasphere.entity.Notice;
 import com.habitasphere.entity.User;
+import com.habitasphere.enums.NotificationType;
 import com.habitasphere.repository.NoticeRepository;
 import com.habitasphere.repository.UserRepository;
 import com.habitasphere.service.NoticeService;
+import com.habitasphere.service.NotificationService;
+
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,24 +23,26 @@ public class NoticeServiceImpl implements NoticeService {
 
     private final NoticeRepository noticeRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public NoticeServiceImpl(
-            NoticeRepository noticeRepository,
-            UserRepository userRepository
-    ) {
-        this.noticeRepository = noticeRepository;
-        this.userRepository = userRepository;
-    }
+   public NoticeServiceImpl(
+        NoticeRepository noticeRepository,
+        UserRepository userRepository,
+        NotificationService notificationService
+) {
+    this.noticeRepository = noticeRepository;
+    this.userRepository = userRepository;
+    this.notificationService = notificationService;
+}
 
     @Override
     public NoticeResponseDto createNotice(
             NoticeRequestDto request
     ) {
 
-        String email =
-                SecurityContextHolder.getContext()
-                        .getAuthentication()
-                        .getName();
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -51,12 +56,20 @@ public class NoticeServiceImpl implements NoticeService {
                 .expiryDate(request.getExpiryDate())
                 .createdAt(LocalDateTime.now())
                 .active(true)
+                .pinned(request.isPinned())
                 .createdBy(user)
                 .build();
 
-        return mapToDto(
-                noticeRepository.save(notice)
-        );
+       Notice savedNotice = noticeRepository.save(notice);
+
+notificationService.createNotification(
+        user,
+        "New Notice Published",
+        savedNotice.getTitle(),
+        NotificationType.NOTICE_PUBLISHED
+);
+
+return mapToDto(savedNotice);
     }
 
     @Override
@@ -67,14 +80,14 @@ public class NoticeServiceImpl implements NoticeService {
 
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Notice not found"));
+                        new EntityNotFoundException("Notice not found"));
 
         notice.setTitle(request.getTitle());
         notice.setContent(request.getContent());
         notice.setType(request.getType());
         notice.setPriority(request.getPriority());
         notice.setExpiryDate(request.getExpiryDate());
+        notice.setPinned(request.isPinned());
 
         return mapToDto(
                 noticeRepository.save(notice)
@@ -86,8 +99,7 @@ public class NoticeServiceImpl implements NoticeService {
 
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Notice not found"));
+                        new EntityNotFoundException("Notice not found"));
 
         notice.setActive(false);
 
@@ -98,11 +110,21 @@ public class NoticeServiceImpl implements NoticeService {
     public List<NoticeResponseDto> getActiveNotices() {
 
         return noticeRepository.findActiveNotices(
-        LocalDate.now()
-)
+                        LocalDate.now()
+                )
                 .stream()
                 .map(this::mapToDto)
                 .toList();
+    }
+
+    @Override
+    public NoticeResponseDto getNoticeById(Long id) {
+
+        Notice notice = noticeRepository.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Notice not found"));
+
+        return mapToDto(notice);
     }
 
     private NoticeResponseDto mapToDto(
@@ -118,6 +140,7 @@ public class NoticeServiceImpl implements NoticeService {
                 .createdAt(notice.getCreatedAt())
                 .expiryDate(notice.getExpiryDate())
                 .active(notice.isActive())
+                .pinned(notice.isPinned())
                 .createdBy(
                         notice.getCreatedBy() != null
                                 ? notice.getCreatedBy().getName()

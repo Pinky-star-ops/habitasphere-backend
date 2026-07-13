@@ -27,6 +27,7 @@ public class NoticeResponseDto {
     private LocalDate expiryDate;
 
     private boolean active;
+    private boolean pinned;
 
     private String createdBy;
 }

@@ -37,6 +37,7 @@ public class Notice {
     private LocalDate expiryDate;
 
     private boolean active = true;
+    private boolean pinned = false;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
