@@ -1,19 +1,28 @@
 package com.habitasphere.dto;
 
 import com.habitasphere.enums.BillStatus;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MaintenanceBillResponse {
 
     private Long id;
-    private String billMonth;
+    private Integer month;
+    private Integer year;
     private Double amount;
-    private LocalDate generatedDate;
+    private Double paidAmount;
+    private Double dueAmount;
+    private Double lateFee;
+    private LocalDateTime generatedAt;
     private LocalDate dueDate;
     private BillStatus status;
     private Long residentId;

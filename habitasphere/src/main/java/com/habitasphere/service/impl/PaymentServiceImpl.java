@@ -56,8 +56,11 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // Validate amount
-        if (request.getAmount() == null || !request.getAmount().equals(bill.getAmount())) {
-            throw new BadRequestException("Payment amount must match the bill amount of: " + bill.getAmount());
+        if (request.getAmount() == null || request.getAmount() <= 0) {
+            throw new BadRequestException("Payment amount must be greater than zero.");
+        }
+        if (request.getAmount() > bill.getDueAmount()) {
+            throw new BadRequestException("Payment amount cannot exceed the due amount of: " + bill.getDueAmount());
         }
 
         // Parse payment method
@@ -83,7 +86,15 @@ public class PaymentServiceImpl implements PaymentService {
 
         // Save payment and update bill status
         Payment savedPayment = paymentRepository.save(payment);
-        bill.setStatus(BillStatus.PAID);
+        
+        bill.setPaidAmount(bill.getPaidAmount() + request.getAmount());
+        bill.setDueAmount(bill.getAmount() + bill.getLateFee() - bill.getPaidAmount());
+        
+        if (bill.getDueAmount() <= 0) {
+            bill.setStatus(BillStatus.PAID);
+        } else {
+            bill.setStatus(BillStatus.PARTIALLY_PAID);
+        }
         billRepository.save(bill);
 
         return toResponse(savedPayment);
@@ -174,13 +185,17 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setStatus(status);
 
-        // If updated to SUCCESS, ensure bill is marked PAID
+        // If updated to SUCCESS, ensure bill is updated
         if (status == PaymentStatus.SUCCESS && payment.getBill() != null) {
             MaintenanceBill bill = payment.getBill();
-            if (bill.getStatus() != BillStatus.PAID) {
+            bill.setPaidAmount(bill.getPaidAmount() + payment.getAmount());
+            bill.setDueAmount(bill.getAmount() + bill.getLateFee() - bill.getPaidAmount());
+            if (bill.getDueAmount() <= 0) {
                 bill.setStatus(BillStatus.PAID);
-                billRepository.save(bill);
+            } else {
+                bill.setStatus(BillStatus.PARTIALLY_PAID);
             }
+            billRepository.save(bill);
         }
 
         return toResponse(paymentRepository.save(payment));

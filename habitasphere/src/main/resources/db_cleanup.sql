@@ -136,6 +136,24 @@ INSERT INTO societies (id, name, address, city, state, country, pin_code)
 SELECT 1, 'HabitaSphere Residency', '100 Green Avenue', 'Metropolis', 'NY', 'USA', '10001'
 WHERE NOT EXISTS (SELECT 1 FROM societies WHERE id = 1);
 
+
+-- 5. FIX MAINTENANCE_BILLS SCHEMA IF OLD VARCHAR COLUMNS EXIST
+-- =============================================================================
+-- In Day 17, bill_month was VARCHAR. Day 22 upgraded bill_month and bill_year to INTEGER.
+-- This drops the old maintenance_bills table if it still has VARCHAR bill_month column.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name='maintenance_bills' 
+          AND column_name='bill_month' 
+          AND data_type LIKE '%char%'
+    ) THEN
+        DROP TABLE maintenance_bills CASCADE;
+    END IF;
+END $$;
+
 -- To promote a registered user to ADMIN, register them first and then run this query:
 -- INSERT INTO user_roles (user_id, role_id) 
 -- VALUES (
