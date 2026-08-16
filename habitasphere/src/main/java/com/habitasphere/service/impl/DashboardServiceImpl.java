@@ -19,6 +19,8 @@ import com.habitasphere.repository.VendorRepository;
 import com.habitasphere.repository.VisitorRepository;
 import com.habitasphere.service.DashboardService;
 import org.springframework.stereotype.Service;
+import com.habitasphere.enums.ParcelStatus;
+import com.habitasphere.repository.ParcelRepository;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +37,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final FacilityBookingRepository facilityBookingRepository;
     private final StaffRepository staffRepository;
     private final VendorRepository vendorRepository;
+    private final ParcelRepository parcelRepository;
 
     public DashboardServiceImpl(
             UserRepository userRepository,
@@ -43,7 +46,8 @@ public class DashboardServiceImpl implements DashboardService {
             VisitorRepository visitorRepository,
             FacilityBookingRepository facilityBookingRepository,
             StaffRepository staffRepository,
-            VendorRepository vendorRepository) {
+            VendorRepository vendorRepository,
+        ParcelRepository parcelRepository) {
 
         this.userRepository = userRepository;
         this.complaintRepository = complaintRepository;
@@ -52,6 +56,8 @@ public class DashboardServiceImpl implements DashboardService {
         this.facilityBookingRepository = facilityBookingRepository;
         this.staffRepository = staffRepository;
         this.vendorRepository = vendorRepository;
+        this.parcelRepository = parcelRepository;
+
     }
 
     @Override
@@ -95,6 +101,21 @@ public class DashboardServiceImpl implements DashboardService {
                 facilityBookingRepository.countByStatus(
                         BookingStatus.PENDING
                 );
+                long totalParcels =
+        parcelRepository.count();
+
+long pendingParcels =
+        parcelRepository.countByStatusIn(
+                Arrays.asList(
+                        ParcelStatus.RECEIVED,
+                        ParcelStatus.NOTIFIED
+                )
+        );
+
+long collectedParcels =
+        parcelRepository.countByStatus(
+                ParcelStatus.COLLECTED
+        );
 
         // Staff statistics
         long totalStaff =
@@ -112,20 +133,23 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<DashboardSummaryDTO> summaryCards =
                 buildSummaryCards(
-                        totalResidents,
-                        totalComplaints,
-                        openComplaints,
-                        totalVisitors,
-                        pendingVisitors,
-                        totalPayments,
-                        pendingPayments,
-                        totalRevenue,
-                        totalBookings,
-                        pendingBookings,
-                        totalStaff,
-                        activeStaff,
-                        totalVendors,
-                        activeVendors
+                totalResidents,
+                totalComplaints,
+                openComplaints,
+                totalVisitors,
+                pendingVisitors,
+                totalPayments,
+                pendingPayments,
+                totalRevenue,
+                totalBookings,
+                pendingBookings,
+                totalParcels,
+                pendingParcels,
+                collectedParcels,
+                totalStaff,
+                activeStaff,
+                totalVendors,
+                activeVendors
                 );
 
         List<ChartDataDTO> complaintChart =
@@ -163,6 +187,9 @@ public class DashboardServiceImpl implements DashboardService {
                 .complaintChart(complaintChart)
                 .paymentChart(paymentChart)
                 .bookingChart(bookingChart)
+                .totalParcels(totalParcels)
+.pendingParcels(pendingParcels)
+.collectedParcels(collectedParcels)
                 .recentActivities(Collections.emptyList())
                 .build();
     }
@@ -273,8 +300,11 @@ public class DashboardServiceImpl implements DashboardService {
             long pendingPayments,
             Double totalRevenue,
             long totalBookings,
-            long pendingBookings,
-            long totalStaff,
+long pendingBookings,
+long totalParcels,
+long pendingParcels,
+long collectedParcels,
+long totalStaff,
             long activeStaff,
             long totalVendors,
             long activeVendors) {
@@ -351,7 +381,26 @@ public class DashboardServiceImpl implements DashboardService {
                         .value(pendingBookings)
                         .build()
         );
+        cards.add(
+        DashboardSummaryDTO.builder()
+                .title("Total Parcels")
+                .value(totalParcels)
+                .build()
+);
 
+cards.add(
+        DashboardSummaryDTO.builder()
+                .title("Pending Parcels")
+                .value(pendingParcels)
+                .build()
+);
+
+cards.add(
+        DashboardSummaryDTO.builder()
+                .title("Collected Parcels")
+                .value(collectedParcels)
+                .build()
+);
         // Staff cards
         cards.add(
                 DashboardSummaryDTO.builder()

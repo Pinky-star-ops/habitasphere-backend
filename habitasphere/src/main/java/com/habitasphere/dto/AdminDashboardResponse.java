@@ -30,6 +30,12 @@ public class AdminDashboardResponse {
 
     private Long pendingBookings;
 
+    private Long totalParcels;
+
+    private Long pendingParcels;
+
+    private Long collectedParcels;
+
     private Double totalRevenue;
 
     private List<DashboardSummaryDTO> summaryCards;
