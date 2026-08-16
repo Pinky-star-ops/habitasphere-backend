@@ -13,7 +13,9 @@ import com.habitasphere.enums.VisitorStatus;
 import com.habitasphere.repository.ComplaintRepository;
 import com.habitasphere.repository.FacilityBookingRepository;
 import com.habitasphere.repository.PaymentRepository;
+import com.habitasphere.repository.StaffRepository;
 import com.habitasphere.repository.UserRepository;
+import com.habitasphere.repository.VendorRepository;
 import com.habitasphere.repository.VisitorRepository;
 import com.habitasphere.service.DashboardService;
 import org.springframework.stereotype.Service;
@@ -31,48 +33,119 @@ public class DashboardServiceImpl implements DashboardService {
     private final PaymentRepository paymentRepository;
     private final VisitorRepository visitorRepository;
     private final FacilityBookingRepository facilityBookingRepository;
+    private final StaffRepository staffRepository;
+    private final VendorRepository vendorRepository;
 
-    public DashboardServiceImpl(UserRepository userRepository, 
-                                ComplaintRepository complaintRepository, 
-                                PaymentRepository paymentRepository, 
-                                VisitorRepository visitorRepository, 
-                                FacilityBookingRepository facilityBookingRepository) {
+    public DashboardServiceImpl(
+            UserRepository userRepository,
+            ComplaintRepository complaintRepository,
+            PaymentRepository paymentRepository,
+            VisitorRepository visitorRepository,
+            FacilityBookingRepository facilityBookingRepository,
+            StaffRepository staffRepository,
+            VendorRepository vendorRepository) {
+
         this.userRepository = userRepository;
         this.complaintRepository = complaintRepository;
         this.paymentRepository = paymentRepository;
         this.visitorRepository = visitorRepository;
         this.facilityBookingRepository = facilityBookingRepository;
+        this.staffRepository = staffRepository;
+        this.vendorRepository = vendorRepository;
     }
 
     @Override
     public AdminDashboardResponse getAdminDashboard() {
-        long totalResidents = userRepository.countUsersByRole(RoleType.ROLE_RESIDENT);
 
-        long totalComplaints = complaintRepository.count();
-        long openComplaints = complaintRepository.countByStatus(ComplaintStatus.OPEN);
-        long resolvedComplaints = complaintRepository.countByStatus(ComplaintStatus.RESOLVED);
+        long totalResidents =
+                userRepository.countUsersByRole(RoleType.ROLE_RESIDENT);
 
-        long totalVisitors = visitorRepository.count();
-        long pendingVisitors = visitorRepository.countByStatus(VisitorStatus.PENDING);
+        long totalComplaints =
+                complaintRepository.count();
 
-        long totalPayments = paymentRepository.count();
-        long pendingPayments = paymentRepository.countByStatus(PaymentStatus.PENDING);
-        Double totalRevenue = paymentRepository.getTotalRevenue();
+        long openComplaints =
+                complaintRepository.countByStatus(ComplaintStatus.OPEN);
+
+        long resolvedComplaints =
+                complaintRepository.countByStatus(ComplaintStatus.RESOLVED);
+
+        long totalVisitors =
+                visitorRepository.count();
+
+        long pendingVisitors =
+                visitorRepository.countByStatus(VisitorStatus.PENDING);
+
+        long totalPayments =
+                paymentRepository.count();
+
+        long pendingPayments =
+                paymentRepository.countByStatus(PaymentStatus.PENDING);
+
+        Double totalRevenue =
+                paymentRepository.getTotalRevenue();
+
         if (totalRevenue == null) {
             totalRevenue = 0.0;
         }
 
-        long totalBookings = facilityBookingRepository.count();
-        long pendingBookings = facilityBookingRepository.countByStatus(BookingStatus.PENDING);
+        long totalBookings =
+                facilityBookingRepository.count();
 
-        List<DashboardSummaryDTO> summaryCards = buildSummaryCards(
-                totalResidents, totalComplaints, openComplaints, totalVisitors, pendingVisitors,
-                totalPayments, pendingPayments, totalRevenue, totalBookings, pendingBookings
-        );
+        long pendingBookings =
+                facilityBookingRepository.countByStatus(
+                        BookingStatus.PENDING
+                );
 
-        List<ChartDataDTO> complaintChart = buildComplaintChart(totalComplaints, openComplaints, resolvedComplaints);
-        List<ChartDataDTO> paymentChart = buildPaymentChart(totalPayments, pendingPayments);
-        List<ChartDataDTO> bookingChart = buildBookingChart(totalBookings, pendingBookings);
+        // Staff statistics
+        long totalStaff =
+                staffRepository.count();
+
+        long activeStaff =
+                staffRepository.countByIsActive(true);
+
+        // Vendor statistics
+        long totalVendors =
+                vendorRepository.count();
+
+        long activeVendors =
+                vendorRepository.countByIsActive(true);
+
+        List<DashboardSummaryDTO> summaryCards =
+                buildSummaryCards(
+                        totalResidents,
+                        totalComplaints,
+                        openComplaints,
+                        totalVisitors,
+                        pendingVisitors,
+                        totalPayments,
+                        pendingPayments,
+                        totalRevenue,
+                        totalBookings,
+                        pendingBookings,
+                        totalStaff,
+                        activeStaff,
+                        totalVendors,
+                        activeVendors
+                );
+
+        List<ChartDataDTO> complaintChart =
+                buildComplaintChart(
+                        totalComplaints,
+                        openComplaints,
+                        resolvedComplaints
+                );
+
+        List<ChartDataDTO> paymentChart =
+                buildPaymentChart(
+                        totalPayments,
+                        pendingPayments
+                );
+
+        List<ChartDataDTO> bookingChart =
+                buildBookingChart(
+                        totalBookings,
+                        pendingBookings
+                );
 
         return AdminDashboardResponse.builder()
                 .totalResidents(totalResidents)
@@ -96,27 +169,87 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public ResidentDashboardResponse getResidentDashboard(String email) {
+
         User resident = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
         Long residentId = resident.getId();
 
-        long myComplaints = complaintRepository.countByResidentId(residentId);
-        long openComplaints = complaintRepository.countByResidentIdAndStatus(residentId, ComplaintStatus.OPEN);
-        long resolvedComplaints = complaintRepository.countByResidentIdAndStatus(residentId, ComplaintStatus.RESOLVED);
+        long myComplaints =
+                complaintRepository.countByResidentId(residentId);
 
-        long pendingPayments = paymentRepository.countByResidentIdAndStatus(residentId, PaymentStatus.PENDING);
+        long openComplaints =
+                complaintRepository.countByResidentIdAndStatus(
+                        residentId,
+                        ComplaintStatus.OPEN
+                );
 
-        long approvedVisitors = visitorRepository.countByCreatedByIdAndStatus(residentId, VisitorStatus.APPROVED);
+        long resolvedComplaints =
+                complaintRepository.countByResidentIdAndStatus(
+                        residentId,
+                        ComplaintStatus.RESOLVED
+                );
 
-        long myBookings = facilityBookingRepository.countByUserId(residentId);
+        long pendingPayments =
+                paymentRepository.countByResidentIdAndStatus(
+                        residentId,
+                        PaymentStatus.PENDING
+                );
 
-        List<DashboardSummaryDTO> summaryCards = new ArrayList<>();
-        summaryCards.add(DashboardSummaryDTO.builder().title("My Complaints").value(myComplaints).build());
-        summaryCards.add(DashboardSummaryDTO.builder().title("Open Complaints").value(openComplaints).build());
-        summaryCards.add(DashboardSummaryDTO.builder().title("Resolved Complaints").value(resolvedComplaints).build());
-        summaryCards.add(DashboardSummaryDTO.builder().title("Pending Payments").value(pendingPayments).build());
-        summaryCards.add(DashboardSummaryDTO.builder().title("Approved Visitors").value(approvedVisitors).build());
-        summaryCards.add(DashboardSummaryDTO.builder().title("My Bookings").value(myBookings).build());
+        long approvedVisitors =
+                visitorRepository.countByCreatedByIdAndStatus(
+                        residentId,
+                        VisitorStatus.APPROVED
+                );
+
+        long myBookings =
+                facilityBookingRepository.countByUserId(residentId);
+
+        List<DashboardSummaryDTO> summaryCards =
+                new ArrayList<>();
+
+        summaryCards.add(
+                DashboardSummaryDTO.builder()
+                        .title("My Complaints")
+                        .value(myComplaints)
+                        .build()
+        );
+
+        summaryCards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Open Complaints")
+                        .value(openComplaints)
+                        .build()
+        );
+
+        summaryCards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Resolved Complaints")
+                        .value(resolvedComplaints)
+                        .build()
+        );
+
+        summaryCards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Pending Payments")
+                        .value(pendingPayments)
+                        .build()
+        );
+
+        summaryCards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Approved Visitors")
+                        .value(approvedVisitors)
+                        .build()
+        );
+
+        summaryCards.add(
+                DashboardSummaryDTO.builder()
+                        .title("My Bookings")
+                        .value(myBookings)
+                        .build()
+        );
 
         return ResidentDashboardResponse.builder()
                 .myComplaints(myComplaints)
@@ -130,43 +263,182 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
-    private List<DashboardSummaryDTO> buildSummaryCards(long totalResidents, long totalComplaints, long openComplaints,
-                                                   long totalVisitors, long pendingVisitors,
-                                                   long totalPayments, long pendingPayments, Double totalRevenue,
-                                                   long totalBookings, long pendingBookings) {
-        List<DashboardSummaryDTO> cards = new ArrayList<>();
-        cards.add(DashboardSummaryDTO.builder().title("Total Residents").value(totalResidents).build());
-        cards.add(DashboardSummaryDTO.builder().title("Total Complaints").value(totalComplaints).build());
-        cards.add(DashboardSummaryDTO.builder().title("Open Complaints").value(openComplaints).build());
-        cards.add(DashboardSummaryDTO.builder().title("Total Visitors").value(totalVisitors).build());
-        cards.add(DashboardSummaryDTO.builder().title("Pending Visitors").value(pendingVisitors).build());
-        cards.add(DashboardSummaryDTO.builder().title("Total Payments").value(totalPayments).build());
-        cards.add(DashboardSummaryDTO.builder().title("Pending Payments").value(pendingPayments).build());
-        cards.add(DashboardSummaryDTO.builder().title("Total Revenue").value(totalRevenue.longValue()).build());
-        cards.add(DashboardSummaryDTO.builder().title("Total Bookings").value(totalBookings).build());
-        cards.add(DashboardSummaryDTO.builder().title("Pending Bookings").value(pendingBookings).build());
+    private List<DashboardSummaryDTO> buildSummaryCards(
+            long totalResidents,
+            long totalComplaints,
+            long openComplaints,
+            long totalVisitors,
+            long pendingVisitors,
+            long totalPayments,
+            long pendingPayments,
+            Double totalRevenue,
+            long totalBookings,
+            long pendingBookings,
+            long totalStaff,
+            long activeStaff,
+            long totalVendors,
+            long activeVendors) {
+
+        List<DashboardSummaryDTO> cards =
+                new ArrayList<>();
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Residents")
+                        .value(totalResidents)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Complaints")
+                        .value(totalComplaints)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Open Complaints")
+                        .value(openComplaints)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Visitors")
+                        .value(totalVisitors)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Pending Visitors")
+                        .value(pendingVisitors)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Payments")
+                        .value(totalPayments)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Pending Payments")
+                        .value(pendingPayments)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Revenue")
+                        .value(totalRevenue.longValue())
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Bookings")
+                        .value(totalBookings)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Pending Bookings")
+                        .value(pendingBookings)
+                        .build()
+        );
+
+        // Staff cards
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Staff")
+                        .value(totalStaff)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Active Staff")
+                        .value(activeStaff)
+                        .build()
+        );
+
+        // Vendor cards
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Total Vendors")
+                        .value(totalVendors)
+                        .build()
+        );
+
+        cards.add(
+                DashboardSummaryDTO.builder()
+                        .title("Active Vendors")
+                        .value(activeVendors)
+                        .build()
+        );
+
         return cards;
     }
 
-    private List<ChartDataDTO> buildComplaintChart(long total, long open, long resolved) {
+    private List<ChartDataDTO> buildComplaintChart(
+            long total,
+            long open,
+            long resolved) {
+
         return Arrays.asList(
-                ChartDataDTO.builder().label("Total").value(total).build(),
-                ChartDataDTO.builder().label("Open").value(open).build(),
-                ChartDataDTO.builder().label("Resolved").value(resolved).build()
+                ChartDataDTO.builder()
+                        .label("Total")
+                        .value(total)
+                        .build(),
+
+                ChartDataDTO.builder()
+                        .label("Open")
+                        .value(open)
+                        .build(),
+
+                ChartDataDTO.builder()
+                        .label("Resolved")
+                        .value(resolved)
+                        .build()
         );
     }
 
-    private List<ChartDataDTO> buildPaymentChart(long total, long pending) {
+    private List<ChartDataDTO> buildPaymentChart(
+            long total,
+            long pending) {
+
         return Arrays.asList(
-                ChartDataDTO.builder().label("Total").value(total).build(),
-                ChartDataDTO.builder().label("Pending").value(pending).build()
+                ChartDataDTO.builder()
+                        .label("Total")
+                        .value(total)
+                        .build(),
+
+                ChartDataDTO.builder()
+                        .label("Pending")
+                        .value(pending)
+                        .build()
         );
     }
 
-    private List<ChartDataDTO> buildBookingChart(long total, long pending) {
+    private List<ChartDataDTO> buildBookingChart(
+            long total,
+            long pending) {
+
         return Arrays.asList(
-                ChartDataDTO.builder().label("Total").value(total).build(),
-                ChartDataDTO.builder().label("Pending").value(pending).build()
+                ChartDataDTO.builder()
+                        .label("Total")
+                        .value(total)
+                        .build(),
+
+                ChartDataDTO.builder()
+                        .label("Pending")
+                        .value(pending)
+                        .build()
         );
     }
 }
